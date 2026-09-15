@@ -2,9 +2,7 @@ FROM golang:1.26-alpine AS builder
 
 ENV GOCACHE=/root/.cache/go-build
 
-RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/var/cache/apk,target=/var/cache/apk,sharing=locked \
-    --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/var/lib/apk,target=/var/lib/apk,sharing=locked \
-    apk add --no-cache \
+RUN apk add --no-cache \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
         "build-base=0.5-r4" \
@@ -12,20 +10,17 @@ RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/var/cache/apk,
 
 WORKDIR /app
 
-RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/go/pkg/mod,target=/go/pkg/mod \
-    go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
 COPY go.mod go.sum ./
 
-RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/go/pkg/mod,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 
 COPY . .
 
 RUN sqlc generate
 
-RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/root/.cache/go-build,target=/root/.cache/go-build \
-    CGO_ENABLED=1 go build \
+RUN CGO_ENABLED=1 go build \
         -ldflags="-s -w" \
         -o govd ./cmd/main.go
 
@@ -33,9 +28,7 @@ FROM alpine:3.22 AS runtime
 
 WORKDIR /app
 
-RUN --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/var/cache/apk,target=/var/cache/apk,sharing=locked \
-    --mount=type=cache,id=s/32db8230-fcef-4237-92fd-0fd1a2369dd5-/var/lib/apk,target=/var/lib/apk,sharing=locked \
-    apk add --no-cache \
+RUN apk add --no-cache \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
         "ffmpeg=8.0.1-r3" \
